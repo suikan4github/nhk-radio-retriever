@@ -113,6 +113,7 @@ struct NewInfo {
     corners: Vec<Corner>,
 }
 
+// 聴き逃し配信が存在する番組の一覧を取得してJSON形式で保存する関数
 fn list_programs(output_file: &str) {
     // 番組の一覧を取得してJSON形式で保存する処理
     let source_url = "https://www.nhk.or.jp/radio-api/app/v1/web/ondemand/corners/new_arrivals";
@@ -120,7 +121,7 @@ fn list_programs(output_file: &str) {
     // source_urlを使用してAPIからデータを取得し、output_fileに保存する処理を実装する
     // reqwestをsyncで使用する。
     let response = reqwest::blocking::get(source_url).expect(&format!(
-        "ソースURL{}へのアクセスを確立できるようにしてください。",
+        "ソースURL {} へのアクセスを確立できるようにしてください。",
         source_url
     ));
 
@@ -134,7 +135,7 @@ fn list_programs(output_file: &str) {
 
     // 書き込み先ファイルを開く
     let mut file = std::fs::File::create(output_file).expect(&format!(
-        "ファイル{}を作成できませんでした。ディレクトリを確認してください。",
+        "ファイル {} を作成できませんでした。ディレクトリを確認してください。",
         output_file
     ));
     // 新着情報をJSON形式でファイルに書き込む
@@ -157,45 +158,61 @@ fn list_programs(output_file: &str) {
     writeln!(&mut file, "]").expect("ファイルへのJSON終了文字の書き込みに失敗しました。");
 }
 
+// 番組に関するJSONをサーバーから取得して、聴き逃し配信のストリームを保存する関数。
+// すでに保存したファイルについては、再度保存しない。
 fn retrieve_programs(program_to_save: &str, output_dir: &str) {
     // 出力ディレクトリが存在しない場合は作成する
     if !std::path::Path::new(output_dir).exists() {
         std::fs::create_dir_all(output_dir).expect(&format!(
-            "出力ディレクトリ{}を作成できませんでした。ディレクトリを確認してください。",
+            "出力ディレクトリ {} を作成できませんでした。ディレクトリを確認してください。",
             output_dir
         ));
     }
-    // Program to saveをJSONとして読み込む
+    // Program to saveを開く。
+    // これはユーザーが編集したJSONファイルで、保存したい番組のIDを含む。
     let file_content = std::fs::read_to_string(program_to_save).expect(
         format!(
-            "指定された{}を読み込めませんでした。ファイル名とディレクトリを確認してください。",
+            "指定された {} を読み込めませんでした。ファイル名とディレクトリを確認してください。",
             program_to_save
         )
         .as_str(),
     );
+    // JSONをデシリアライズして、保存したい番組の情報を取得する。
     let programs: Vec<Corner> = serde_json::from_str(&file_content)
         .expect(format!("{}のフォーマットが正しくありません。", program_to_save).as_str());
     // 各コーナーの情報を表示する
     for program in programs {
         // 番組とコーナーごとのJSONのURL
+        // すべての番組とコーナーはユニークなIDを持っており、そこから番組情報のURLを組み立てることができる。
         let series_url = format!(
             "https://www.nhk.or.jp/radio-api/app/v1/web/ondemand/series?site_id={}&corner_site_id={}",
             program.series_site_id, program.corner_site_id
         );
-        // corner_urlを使用してAPIからデータを取得し、デシリアライズする。
+        // series_urlを使用してAPIから番組データを取得する。
         let response = reqwest::blocking::get(&series_url).expect(&format!(
-            "ソースURL{}へのアクセスを確立できるようにしてください。",
+            "番組URL {} へのアクセスを確立できるようにしてください。",
             series_url
         ));
         // JSONレスポンスをテキストとして取得する
-        let body = response
-            .text()
-            .expect("正しいテキストファイルを取得できるURLを指定してください。");
+        // ここで失敗することは、まぁ無い。
+        let body = response.text().expect(
+            format!(
+                "URL {} から正しいテキストファイルを取得できるようにしてください。",
+                series_url
+            )
+            .as_str(),
+        );
         // シリーズ情報をデシリアライズする
-        let series: Series = serde_json::from_str(&body).expect("JSON was not well-formatted");
+        let series: Series = serde_json::from_str(&body).expect(
+            format!(
+                "サーバーから取得したJSON {} が正しくありません。",
+                series_url
+            )
+            .as_str(),
+        );
         // 各エピソードの情報を処理する
         for episode in series.episodes {
-            // idとprogram_titleからエピソードに対応するファイル名を作る。
+            // idとprogram_titleからエピソードに対応する出力ファイル名を作る。
             let episode_filename = format!(
                 "{}/{}_{}.m4a",
                 output_dir,
@@ -205,28 +222,8 @@ fn retrieve_programs(program_to_save: &str, output_dir: &str) {
             .replace("//", "/"); // 余分なディレクトリ記号を削除
             // エピソードファイルが存在しないなら、stream_urlからストリームを保存する。
             if !std::path::Path::new(&episode_filename).exists() {
-                // FFmpegを使用してストリームを保存する。
-                /*
-                               let mut child : std::process::Child = std::process::Command::new("ffmpeg")
-                                   .arg("-reconnect").arg("1")
-                                   .arg("-reconnect_at_eof")
-                                   .arg("1")
-                                   .arg("-reconnect_on_network_error").arg("1")
-                                   .arg("-http_seekable")
-                                   .arg("0")
-                                   .arg("-i")
-                                   .arg(&episode.stream_url)
-                                   .arg("-c")
-                                   .arg("copy")
-                                   .arg(&episode_filename)
-                                   .arg("-loglevel")
-                                   .arg("error")
-                                   .spawn()
-                                   .expect("FFmpegの起動に失敗しました。FFmpegがインストールされていることを確認してください。");
-                */
                 // gst-launch-1.0 コマンドを構築
-                let mut child = std::process::Command::new("gst-launch-1.0")
-  
+                let mut child = std::process::Command::new("gst-launch-1.0")  
                     .arg("souphttpsrc")// souphttpsrc uses libsoup to get resources from HTTP.
                     .arg(format!("location={}", &episode.stream_url))
                     .arg("!")
@@ -243,7 +240,7 @@ fn retrieve_programs(program_to_save: &str, output_dir: &str) {
                     .stdout(if cfg!(unix) { std::process::Stdio::null() } else { std::process::Stdio::inherit() }) // 標準出力を無視
                     .spawn()
                     .expect("gst-launch-1.0の起動に失敗しました。gst-launch-1.0がインストールされていることを確認してください。");
-                    
+
                 let _ = child
                     .wait()
                     .expect("gst-launch-1.0のプロセスが正常に終了しませんでした。");
@@ -251,12 +248,3 @@ fn retrieve_programs(program_to_save: &str, output_dir: &str) {
         }
     }
 }
-
-/*
-gst-launch-1.0 \
-    souphttpsrc location="${STREAM_URL}" \
-    ! hlsdemux \
-    ! aacparse \
-    ! m4amux \
-    ! filesink location="${RECORDING_PATH}.m4a" sync=false async=false > /dev/null 2> ${RECORDING_PATH}.log
-*/
