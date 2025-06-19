@@ -65,11 +65,11 @@ fn main() {
         }
         Command::GenerateCompletions { shell } => {
             // コマンドライン補完のためのスクリプトを生成する処理
-            let mut cmd = Cli::command();
+            let mut cmd = Cli::command(); // 次の行で使う
             clap_complete::generate(
                 shell,                  // 使用するシェルの種類
                 &mut cmd,               // コマンドの定義
-                env!("CARGO_PKG_NAME"), // パッケージ名
+                env!("CARGO_PKG_NAME"), // Cargo.tomlに書いたパッケージ名
                 &mut std::io::stdout(), // 出力先
             );
         }
@@ -220,20 +220,20 @@ fn retrieve_programs(program_to_save: &str, output_dir: &str) {
                 episode.program_title.replace(" ", "_")
             )
             .replace("//", "/"); // 余分なディレクトリ記号を削除
-            // エピソードファイルが存在しないなら、stream_urlからストリームを保存する。
+                                 // エピソードファイルが存在しないなら、stream_urlからストリームを保存する。
             if !std::path::Path::new(&episode_filename).exists() {
                 // gst-launch-1.0 コマンドを構築
                 let mut child = std::process::Command::new("gst-launch-1.0")  
                     .arg("souphttpsrc")// souphttpsrc uses libsoup to get resources from HTTP.
                     .arg(format!("location={}", &episode.stream_url))
                     .arg("!")
-                    .arg("hlsdemux") // Demux the HLS stream.
+                    .arg("hlsdemux")   // Then, demux the HLS stream.
                     .arg("!")
-                    .arg("aacparse")// Parse the AAC audio stream.
+                    .arg("aacparse")   // And then, parse the AAC audio stream.
                     .arg("!")
-                    .arg("mp4mux") // Then, mux it into MP4 format.
+                    .arg("mp4mux")     // And then, mux it into MP4 format.
                     .arg("!")
-                    .arg("filesink") // And then, write it to a file.
+                    .arg("filesink")   // And then, write it to a file.
                     .arg(format!("location={}", episode_filename))
                     .arg("sync=false")
                     .arg("async=false")
