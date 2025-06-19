@@ -1,7 +1,8 @@
 [package]
 name = "nhk-radio-retriever"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
+description = "らじるらじる聞き逃し配信保存ソフト"
 
 [dependencies]
 # コマンドライン解析
