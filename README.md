@@ -53,11 +53,58 @@ cargo build
 # 利用方法
 
 ## 聞き逃し配信番組リストの取得
+list サブコマンドを使用して、NHKの聴き逃し配信番組の一覧を取得できます。
+```sh
+cargo run -- list
+```
+特に指定しない場合、カレントディレクトリの`available_program.json`に番組の一覧が保存されます。JSONファイル形式は以下のようになっています。
 
+```json:available_program.json
+[
+{"title": "FM能楽堂","corner_name": "","series_site_id": "BWK24VXYWW","corner_site_id": "01"},
+{"title": "弾き語りフォーユー","corner_name": "","series_site_id": "ZG79L367QZ","corner_site_id": "01"},
+{"title": "名曲スケッチ","corner_name": "","series_site_id": "K7NR257MJ5","corner_site_id": "01"},
+{"title": "音楽遊覧飛行","corner_name": "","series_site_id": "2QVV8Q6LV2","corner_site_id": "01"},
+...
+]
+```
+このJSONファイルは、番組のタイトル、コーナー名、シリーズサイトID、コーナーサイトIDを含んでいます。
+
+JSONファイルのパスを指定することもできます。
+```sh
+cargo run -- list --output-file /path/to/your/available_program.json
+```
+`--output-file`オプションを使用して、出力先のファイルを指定できます。
 ## 保存したい番組の指定
+番組のタイトルを頼りに、保存したい番組を選び、それ以外の行を削除してください。
+
+そうして、出来上がったJSONファイルを`program_to_save.json`という名前で保存してください。
+```json:program_to_save.json
+[
+{"title": "名曲スケッチ","corner_name": "","series_site_id": "K7NR257MJ5","corner_site_id": "01"},
+{"title": "音楽遊覧飛行","corner_name": "","series_site_id": "2QVV8Q6LV2","corner_site_id": "01"}
+]
+```
+JSONファイルの規則に沿っていれば、改行やインデントは自由です。
 
 ## 番組の保存
+`program_to_save.json`はカレントディレクトリにおいてください。
+次に、retrieve サブコマンドを使用して、指定した番組のコンテンツを保存します。
+```sh
+cargo run -- retrieve
+```
+取得した音楽ファイルは、`~/recordings`ディレクトリに保存されます。
 
+ファイルの名前は番組名と一意な番号の組み合わせになっています。
+既に存在するファイルは再取得されません。
+
+`program_to_save.json`のパスや、音楽ファイルの保存先を変更したい場合は、以下のようにオプションを指定できます。
+
+```sh
+cargo run -- retrieve --program-to-save /path/to/your/program_to_save.json --output-dir /path/to/your/recordings
+```
+`--program-to-save`オプションで番組のJSONファイルのパスを、`--output-dir`オプションで保存先ディレクトリを指定できます。
 ## シェル補完
 
 # ライセンス
+このプログラムは[MITライセンス](LICENSE)の下で公開されています。
