@@ -25,7 +25,7 @@ cd "$RECORDING_DIR" || exit 1
 # アップロードしたファイル名を一時ファイルに記録
 TMPFILE=$(mktemp)
 find . -maxdepth 1 -type f -name "*.m4a" -size +0c | while read -r file; do
-    if rclone copy "$file" remote:recordings/; then
+    if rclone copy "$file" gdrive:recordings/; then
         echo "Successfully copied $file to the cloud." | mail -s "Recording Upload Success" root
         echo "$file" >> "$TMPFILE"
     else
