@@ -19,10 +19,30 @@ cargo run --release -- retrieve || {
     exit 1
 } 
 
+# 録音ファイル・ディレクトリに移動
 cd "$RECORDING_DIR" || exit 1
-# Find all new .m4a files which is larger than 0 byte and copy them to the cloud.
-find . -maxdepth 1 -type f -name "*.m4a" -size +0c -exec rclone copy {} gdrive:recordings/ \; -exec echo "Copied {} to cloud." | mail -s "Recording Copied" root \; 
 
-# Truncate the original files to 0 byte.
-find . -maxdepth 1 -type f -name "*.m4a" -size +0c -exec truncate -s 0 {} \;
+# アップロードしたファイル名を一時ファイルに記録
+TMPFILE=$(mktemp)
+find . -maxdepth 1 -type f -name "*.m4a" -size +0c | while read -r file; do
+    if rclone copy "$file" remote:recordings/; then
+        echo "Successfully copied $file to the cloud." | mail -s "Recording Upload Success" root
+        echo "$file" >> "$TMPFILE"
+    else
+        echo "Failed to copy $file to the cloud." | mail -s "Recording Upload Failed" root
+    fi
+done
+
+# アップロード成功したファイルだけtruncate
+if [ -s "$TMPFILE" ]; then
+    while read -r file; do
+        truncate -s 0 "$file"
+    done < "$TMPFILE"
+fi
+
+# Clean up the temporary file
+rm -f "$TMPFILE"
+
+
+
 
