@@ -1,18 +1,22 @@
 #!/bin/sh
 
-# Sample script to push a file to the cloud.
+# 取得したファイルをクラウドにアップロードするサンプルスクリプト
 # Usage: ./push-to-cloud.sh 
 #
-# This script copies all new *.m4a files in ~/recordings.
-# And for each file, it report to root by email. 
-# Finally, original copied files are truncated to size 0 byte. 
-# 
-# Ensure you have the necessary permissions and configurations set up for your cloud service with rclone.
+# このスクリプトは、nhk-radio-retrieverが取得した録音ファイルを
+# Google Driveなどのクラウドストレージにアップロードします。
+# その後、アップロードしたファイルをメールで通知します。
+# 最後に、元のファイルは0バイトに切り詰め、30日後に削除します。
+#
+# 前提条件:
+# - rcloneがインストールされていること
+# - rcloneの設定が完了していること（Google Driveなどのクラウドストレージへのアクセスが設定されていること）
+# - mailコマンドが使用可能であること（メール送信のため）
 
-# Set the recording directory.
+# 録音ファイルのディレクトリ
 RECORDING_DIR=~/recordings
 
-# Assume the current directory is sample directory.
+# 現在のディレクトリがnhk-radio-retriever/sampleであることを前提としている。
 cd ..
 cargo run --release -- retrieve || {
     echo "Failed to retrieve recordings." | mail -s "Recording Retrieval Failed" root
@@ -28,11 +32,11 @@ cd "$RECORDING_DIR" || exit 1
 find . -maxdepth 1 -type f -name "*.m4a" -size +0c | while read -r file; do
     if rclone copy "$file" gdrive:recordings/; then
         # 成功報告。URLはGoogle Driveのユーザー固有ディレクトリ
-        echo "Successfully copied $file to the cloud. https://drive.google.com/drive/folders/1SE54Ee5l9JLUoK9be6jbWKbAv_54v9JS" | mail -s "Recording Upload Success" root
+        echo "nhk-radio-retrieverで取得した $file をクラウドにアップロードしました. https://drive.google.com/drive/folders/1SE54Ee5l9JLUoK9be6jbWKbAv_54v9JS" | mail -s "成功：録音ファイルのアップロード" root
         truncate -s 0 "$file" # ファイルを0バイトにする
     else
         # 失敗報告
-        echo "Failed to copy $file to the cloud." | mail -s "Recording Upload Failed" root
+        echo "nhk-radio-retrieverで取得した $file をクラウドにアップロードできませんでした" | mail -s "失敗：録音ファイルのアップロード" root
     fi
 done
 

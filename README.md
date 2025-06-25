@@ -104,7 +104,6 @@ cargo run -- retrieve
 cargo run -- retrieve --program-to-save /path/to/your/program_to_save.json --output-dir /path/to/your/recordings
 ```
 `--program-to-save`オプションで番組のJSONファイルのパスを、`--output-dir`オプションで保存先ディレクトリを指定できます。
-## シェル補完
 
 # ライセンス
 このプログラムは[MITライセンス](LICENSE)の下で公開されています。
