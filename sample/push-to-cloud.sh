@@ -36,3 +36,7 @@ find . -maxdepth 1 -type f -name "*.m4a" -size +0c | while read -r file; do
     fi
 done
 
+# 作成して30日以上経過したファイルを削除する
+# 報告は不要
+find . -maxdepth 1 -type f -name "*.m4a" -mtime +30 -exec rm -f {} \;
+
