@@ -22,27 +22,17 @@ cargo run --release -- retrieve || {
 # 録音ファイル・ディレクトリに移動
 cd "$RECORDING_DIR" || exit 1
 
-# アップロードしたファイル名を一時ファイルに記録
-TMPFILE=$(mktemp)
+# ファイルをアップロードする
+# 結果はいずれもメールで報告する
+# 成功した場合はファイルをtruncateする
 find . -maxdepth 1 -type f -name "*.m4a" -size +0c | while read -r file; do
     if rclone copy "$file" gdrive:recordings/; then
-        echo "Successfully copied $file to the cloud." | mail -s "Recording Upload Success" root
-        echo "$file" >> "$TMPFILE"
+        # 成功報告。URLはGoogle Driveのユーザー固有ディレクトリ
+        echo "Successfully copied $file to the cloud. https://drive.google.com/drive/folders/1SE54Ee5l9JLUoK9be6jbWKbAv_54v9JS" | mail -s "Recording Upload Success" root
+        truncate -s 0 "$file" # ファイルを0バイトにする
     else
+        # 失敗報告
         echo "Failed to copy $file to the cloud." | mail -s "Recording Upload Failed" root
     fi
 done
-
-# アップロード成功したファイルだけtruncate
-if [ -s "$TMPFILE" ]; then
-    while read -r file; do
-        truncate -s 0 "$file"
-    done < "$TMPFILE"
-fi
-
-# Clean up the temporary file
-rm -f "$TMPFILE"
-
-
-
 
