@@ -13,6 +13,11 @@
 # - rcloneの設定が完了していること（Google Driveなどのクラウドストレージへのアクセスが設定されていること）
 # - mailコマンドが使用可能であること（メール送信のため）
 
+# cargoのパスの設定。
+# cargoをrustの公式インストーラでインストールした場合は、以下が必要になる。
+# Ubuntuのリポジトリからインストールした場合は不要。
+export PATH="$HOME/.cargo/bin:$PATH"
+
 # 録音ファイルのディレクトリ
 RECORDING_DIR=~/recordings
 
