@@ -23,7 +23,7 @@ RECORDING_DIR=~/recordings
 
 # 現在のディレクトリがnhk-radio-retriever/sampleであることを前提としている。
 cd ..
-cargo run --release -- retrieve || {
+cargo run --release -q -- retrieve || {
     echo "Failed to retrieve recordings." | mail -s "Recording Retrieval Failed" root
     exit 1
 } 
