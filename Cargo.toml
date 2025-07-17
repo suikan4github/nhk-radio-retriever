@@ -1,0 +1,17 @@
+[package]
+name = "nhk-radio-retriever"
+version = "0.1.0"
+edition = "2021"
+description = "らじるらじる聞き逃し配信保存ソフト"
+
+[dependencies]
+# コマンドライン解析
+clap = { version = "4.x", features = ["derive"] }
+clap_complete = "4.x"
+
+# 同期的なファイル取得
+reqwest = {version = "0.12", features=["blocking"]}
+
+# JSONのデシリアライズ処理用クレート
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
