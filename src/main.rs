@@ -217,7 +217,7 @@ fn retrieve_programs(program_to_save: &str, output_dir: &str) {
                 "{}/{}_{}.m4a",
                 output_dir,
                 episode.id,
-                episode.program_title.replace(" ", "_")
+                episode.program_title.replace(" ", "_").replace("/", "／")
             )
             .replace("//", "/"); // 余分なディレクトリ記号を削除
                                  // エピソードファイルが存在しないなら、stream_urlからストリームを保存する。
