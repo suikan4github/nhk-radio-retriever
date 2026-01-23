@@ -202,14 +202,20 @@ fn retrieve_programs(program_to_save: &str, output_dir: &str) {
             )
             .as_str(),
         );
+
+        println!("body: {}", body);
+        
         // シリーズ情報をデシリアライズする
-        let series: Series = serde_json::from_str(&body).expect(
-            format!(
-                "サーバーから取得したJSON {} が正しくありません。",
-                series_url
-            )
-            .as_str(),
-        );
+        let series: Series = match serde_json::from_str(&body) {
+            Ok(s) => s,
+            Err(e) => {
+                eprintln!(
+                    "警告: 番組 '{}' のJSON取得に失敗しました。スキップします。\nURL: {}\nエラー: {}",
+                    program.title, series_url, e
+                );
+                continue; // このプログラムをスキップして次へ
+            }
+        };
         // 各エピソードの情報を処理する
         for episode in series.episodes {
             // idとprogram_titleからエピソードに対応する出力ファイル名を作る。
