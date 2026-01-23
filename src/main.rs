@@ -202,8 +202,6 @@ fn retrieve_programs(program_to_save: &str, output_dir: &str) {
             )
             .as_str(),
         );
-
-        println!("body: {}", body);
         
         // シリーズ情報をデシリアライズする
         let series: Series = match serde_json::from_str(&body) {
