@@ -189,10 +189,23 @@ fn retrieve_programs(program_to_save: &str, output_dir: &str) {
             program.series_site_id, program.corner_site_id
         );
         // series_urlを使用してAPIから番組データを取得する。
-        let response = reqwest::blocking::get(&series_url).expect(&format!(
-            "番組URL {} へのアクセスを確立できるようにしてください。",
-            series_url
-        ));
+        let client = reqwest::blocking::Client::new();
+        let response = client
+            .get(&series_url)
+            .header(reqwest::header::USER_AGENT, "nhk-radio-retriever/1.0")
+            .header(reqwest::header::ACCEPT, "application/json")
+            .send()
+            .expect(&format!(
+                "番組URL {} へのアクセスを確立できるようにしてください。",
+                series_url
+            ));
+        let status = response.status();
+        let content_type = response
+            .headers()
+            .get(reqwest::header::CONTENT_TYPE)
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("(unknown)")
+            .to_string();
         // JSONレスポンスをテキストとして取得する
         // ここで失敗することは、まぁ無い。
         let body = response.text().expect(
@@ -202,6 +215,21 @@ fn retrieve_programs(program_to_save: &str, output_dir: &str) {
             )
             .as_str(),
         );
+        if !status.is_success() {
+            let preview = body.chars().take(200).collect::<String>();
+            eprintln!(
+                "警告: HTTPステータスが成功ではありません。スキップします。\nURL: {}\nStatus: {}\nContent-Type: {}\nBody(先頭200文字): {}",
+                series_url, status, content_type, preview
+            );
+            continue;
+        }
+        if body.trim().is_empty() {
+            eprintln!(
+                "警告: レスポンスが空でした。スキップします。\nURL: {}\nStatus: {}\nContent-Type: {}",
+                series_url, status, content_type
+            );
+            continue;
+        }
         
         // シリーズ情報をデシリアライズする
         let series: Series = match serde_json::from_str(&body) {
