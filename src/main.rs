@@ -142,6 +142,16 @@ fn list_programs(output_file: &str) {
     // 新着聴き逃し情報をデシリアライズする
     let new_info: NewInfo = serde_json::from_str(&body).expect("JSON was not well-formatted");
 
+    // 親ディレクトリが存在しない場合は作成する
+    if let Some(parent) = std::path::Path::new(output_file).parent() {
+        if !parent.as_os_str().is_empty() {
+            std::fs::create_dir_all(parent).expect(&format!(
+                "ディレクトリ {} を作成できませんでした。パスを確認してください。",
+                parent.display()
+            ));
+        }
+    }
+
     // 書き込み先ファイルを開く
     let mut file = std::fs::File::create(output_file).expect(&format!(
         "ファイル {} を作成できませんでした。ディレクトリを確認してください。",
