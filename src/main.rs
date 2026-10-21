@@ -17,18 +17,18 @@ use std::io::Write;
 enum Command {
     /// 番組の一覧を表示する
     List {
-        /// 番組の一覧をJSON形式で保存するファイルのパス
-        #[arg(short, long, default_value = "available_program.json")]
-        output_file: String,
+        /// 番組の一覧をJSON形式で保存するファイルのパス。デフォルトは $HOME/.config/nhk-radio-retriever/available_program.json
+        #[arg(short, long)]
+        output_file: Option<String>,
     },
     /// 番組のストリームを保存する
     Retrieve {
-        /// 保存したい番組のIDを格納したJSONファイルのパス
-        #[arg(short, long, default_value = "program_to_save.json")]
-        program_to_save: String,
-        /// 保存先のディレクトリ
-        #[arg(short, long, default_value = concat!(env!("HOME"), "/recordings"))]
-        output_dir: String,
+        /// 保存したい番組のIDを格納したJSONファイルのパス。デフォルトは $HOME/.config/nhk-radio-retriever/program_to_save.json
+        #[arg(short, long)]
+        program_to_save: Option<String>,
+        /// 保存先のディレクトリ。デフォルトは $HOME/.local/share/nhk-radio-retriever/recordings
+        #[arg(short, long)]
+        output_dir: Option<String>,
     },
     /// コマンドライン補完のためのスクリプトを生成する
     GenerateCompletions {
@@ -46,31 +46,40 @@ struct Cli {
     command: Command,
 }
 
+fn home_path(relative_path: &str) -> String {
+    let home = std::env::var("HOME").expect("HOME environment variable is not set");
+    format!("{home}/{relative_path}")
+}
+
 fn main() {
-    // コマンドライン引数を解析する
     let cli = Cli::parse();
 
-    // サブコマンドに応じて処理を分岐する
     match cli.command {
         Command::List { output_file } => {
-            // 番組の一覧を表示する処理
+            let output_file = output_file.unwrap_or_else(|| {
+                home_path(".config/nhk-radio-retriever/available_program.json")
+            });
             list_programs(&output_file);
         }
         Command::Retrieve {
             program_to_save,
             output_dir,
         } => {
-            // 番組のストリームを保存する処理
+            let program_to_save = program_to_save.unwrap_or_else(|| {
+                home_path(".config/nhk-radio-retriever/program_to_save.json")
+            });
+            let output_dir = output_dir.unwrap_or_else(|| {
+                home_path(".local/share/nhk-radio-retriever/recordings")
+            });
             retrieve_programs(&program_to_save, &output_dir);
         }
         Command::GenerateCompletions { shell } => {
-            // コマンドライン補完のためのスクリプトを生成する処理
-            let mut cmd = Cli::command(); // 次の行で使う
+            let mut cmd = Cli::command();
             clap_complete::generate(
-                shell,                  // 使用するシェルの種類
-                &mut cmd,               // コマンドの定義
-                env!("CARGO_PKG_NAME"), // Cargo.tomlに書いたパッケージ名
-                &mut std::io::stdout(), // 出力先
+                shell,
+                &mut cmd,
+                env!("CARGO_PKG_NAME"),
+                &mut std::io::stdout(),
             );
         }
     }

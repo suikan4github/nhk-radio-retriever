@@ -30,7 +30,7 @@ Options:
 以下の環境で動作を確認しています。
 - Ubuntu 24.04 LTS (WSL2)
 - Debian 12
-- Cargo 1.86.0
+- 最新の安定版Rustツールチェーン
 
 # インストール方法
 Ubuntu 24.04 LTSでのインストール方法を示します。
