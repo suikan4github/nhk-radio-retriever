@@ -1,7 +1,8 @@
 [package]
 name = "nhk-radio-retriever"
-version = "1.0.3"
+version = "1.1.0"
 edition = "2021"
+license = "MIT"
 description = "らじるらじる聞き逃し配信保存ソフト"
 
 [dependencies]
@@ -15,3 +16,17 @@ reqwest = {version = "0.12", features=["blocking"]}
 # JSONのデシリアライズ処理用クレート
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+[package.metadata.deb]
+maintainer = "HORIE Seiichi"
+copyright = "HORIE Seiichi"
+section = "utils"
+priority = "optional"
+depends = "$auto, rclone, s-nail | bsd-mailx | mailutils, util-linux, gstreamer1.0-tools, gstreamer1.0-plugins-bad"
+maintainer-scripts = "deb/maintainer-scripts"
+systemd-units = { unit-scripts = "deb", enable = true, start = false }
+assets = [
+    ["target/release/nhk-radio-retriever", "usr/bin/", "755"],
+    ["deb/push-to-cloud.sh", "usr/bin/nhk-radio-push-to-cloud", "755"],
+    ["deb/nhk-radio-retriever.default", "etc/default/nhk-radio-retriever", "644"],
+]
+conf-files = ["/etc/default/nhk-radio-retriever"]
