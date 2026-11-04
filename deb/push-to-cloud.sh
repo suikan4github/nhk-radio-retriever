@@ -16,7 +16,7 @@
 # - MTA_ADDRESS環境変数にSMTPサーバーのアドレスを設定しておくこと（例: smtp.example.com）
 # - STORAGE_URL環境変数にクラウドストレージのURLを設定しておくこと（例: https://drive.google.com/drive/folders/xxx） 
 #   このURLはメールを受け取ったユーザーが、アップロード先のクラウドストレージにアクセスできるようにするためのURLである。
-# - オプションとしてREMOTE_DIR環境変数にクラウドストレージ上のディレクトリを設定しておくこと。（デフォルト: recordings/）
+# - オプションとしてREMOTE_DIR環境変数にクラウドストレージ上のディレクトリを設定しておくこと。（デフォルト: nhk_radio/）
 
 # MTA_ADDRESS環境変数が未設定ならば、エラーとして終了する
 # STORAGE_URL環境変数が未設定ならば、エラーとして終了する
@@ -60,7 +60,7 @@ done
 upload_ok=0
 attempt=1
 while :; do
-    if rclone copy "${RECORDING_DIR}" remote:"${REMOTE_DIR:-recordings/}"; then
+    if rclone sync "${RECORDING_DIR}" nhk_storage:"${REMOTE_DIR:-nhk_radio/}"; then
         upload_ok=1
         break
     fi
@@ -83,4 +83,3 @@ fi
 # 作成して30日以上経過したファイルを、アップロードの成否にかかわらず削除する。
 # 失敗後も放置しておくと、ディスク容量を圧迫する可能性があるため、30日後に削除する。
 find "$RECORDING_DIR" -maxdepth 1 -type f -name "*.m4a" -mtime +30 -exec rm -f {} \;
-

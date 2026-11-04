@@ -84,9 +84,23 @@ sudo apt install ./target/debian/nhk-radio-retriever_*.deb
    |---|---|---|
    | `MTA_ADDRESS` | 必須 | 結果通知メールを送るSMTPサーバーのアドレス（例: `smtp.example.com`） |
    | `STORAGE_URL` | 必須 | 通知メールに記載するクラウドストレージのURL |
-   | `REMOTE_DIR` | 任意 | アップロード先のディレクトリ。省略時は`recordings/` |
+   | `REMOTE_DIR` | 任意 | アップロード先のディレクトリ。省略時は`nhk_radio/` |
 
-2. 専用ユーザーでrcloneを設定します。リモート名は**`remote`**にしてください。
+2. rcloneをインストールします。Debianのパッケージは古いため、公式のインストールスクリプトを使います。
+   事前に`curl`が必要です（debパッケージの依存には含めていません）。
+   ```sh
+   sudo apt install curl
+   curl https://rclone.org/install.sh | sudo bash
+   ```
+
+3. 専用ユーザーでrcloneを設定します。
+   なお、インストール先がヘッドレスサーバーの場合、SSHトンネルを使って手元のPCで認証を行う必要があります。SSHトンネルを有効にするため、次のコマンドでSSH接続しておいてください。
+   ```sh
+   ssh -L 53682:localhost:53682 <ユーザー名>@<ヘッドレスサーバーのホスト名またはIPアドレス>
+   ```
+
+   次にrcloneの設定を行います。
+   リモート名は**`nhk_storage`**にしてください。
    サービスの種類（OneDrive、Google Driveなど）はリモートの`type`で決まるので、
    スクリプトを変更せずに切り替えられます。
    ```sh
@@ -95,7 +109,7 @@ sudo apt install ./target/debian/nhk-radio-retriever_*.deb
    ブラウザのない環境でOAuth認証が必要な場合は、手元のPCで`rclone authorize "onedrive"`などを実行し、
    表示されたトークンを`rclone config`に貼り付けます。
 
-3. 保存したい番組を指定する`program_to_save.json`を、専用ユーザーの設定ディレクトリに置きます。
+4. 保存したい番組を指定する`program_to_save.json`を、専用ユーザーの設定ディレクトリに置きます。
    作り方は後述の「保存したい番組の指定」を参照してください。
    ```sh
    sudo -u nhk-radio -H mkdir -p /var/lib/nhk-radio-retriever/.config/nhk-radio-retriever

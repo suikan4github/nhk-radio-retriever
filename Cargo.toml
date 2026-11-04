@@ -21,7 +21,7 @@ maintainer = "HORIE Seiichi"
 copyright = "HORIE Seiichi"
 section = "utils"
 priority = "optional"
-depends = "$auto, rclone, s-nail | bsd-mailx | mailutils, util-linux, gstreamer1.0-tools, gstreamer1.0-plugins-bad"
+depends = "$auto, s-nail | bsd-mailx | mailutils, util-linux, gstreamer1.0-tools, gstreamer1.0-plugins-bad"
 maintainer-scripts = "deb/maintainer-scripts"
 systemd-units = { unit-scripts = "deb", enable = true, start = false }
 assets = [

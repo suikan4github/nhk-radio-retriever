@@ -6,6 +6,6 @@ MTA_ADDRESS=
 # アップロード先クラウドストレージのURL（必須）。通知メールに記載される。
 STORAGE_URL=
 
-# `rclone config` で作成するリモート名は "remote" とすること。
-# リモート上の保存先ディレクトリ（省略時: recordings/）
-#REMOTE_DIR=recordings/
+# `rclone config` で作成するリモート名は "nhk_storage" とすること。
+# リモート上の保存先ディレクトリ（省略時: nhk_radio/）
+#REMOTE_DIR=nhk_radio/
