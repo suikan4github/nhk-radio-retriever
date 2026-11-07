@@ -89,7 +89,7 @@ sudo apt install ./target/debian/nhk-radio-retriever_*.deb
 2. rcloneをインストールします。Debianのパッケージは古いため、公式のインストールスクリプトを使います。
    事前に`curl`が必要です（debパッケージの依存には含めていません）。
    ```sh
-   sudo apt install curl
+   sudo apt install curl unzip
    curl https://rclone.org/install.sh | sudo bash
    ```
 
