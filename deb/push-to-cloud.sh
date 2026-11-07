@@ -60,7 +60,7 @@ done
 upload_ok=0
 attempt=1
 while :; do
-    if rclone sync "${RECORDING_DIR}" nhk_storage:"${REMOTE_DIR:-nhk_radio/}"; then
+    if rclone sync "${RECORDING_DIR}" nhk_radio:"${REMOTE_DIR:-nhk_radio/}"; then
         upload_ok=1
         break
     fi

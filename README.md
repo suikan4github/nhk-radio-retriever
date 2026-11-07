@@ -100,7 +100,7 @@ sudo apt install ./target/debian/nhk-radio-retriever_*.deb
    ```
 
    次にrcloneの設定を行います。
-   リモート名は**`nhk_storage`**にしてください。
+   リモート名は**`nhk_radio`**にしてください。
    サービスの種類（OneDrive、Google Driveなど）はリモートの`type`で決まるので、
    スクリプトを変更せずに切り替えられます。
    ```sh
