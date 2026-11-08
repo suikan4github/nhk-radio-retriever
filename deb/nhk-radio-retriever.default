@@ -1,7 +1,12 @@
 # nhk-radio-retriever の設定ファイル。nhk-radio-retriever.service が読み込む。
 
-# SMTPサーバーのアドレス（必須）
+# SMTPサーバーのホスト名またはIPアドレス（25番ポート、必須）
+#MTA_ADDRESS=192.168.0.1 # 例
 MTA_ADDRESS=
+
+# 通知メールの宛先（必須）
+#MAIL_RECIPIENT=foo@example.com
+MAIL_RECIPIENT=
 
 # アップロード先クラウドストレージのURL（必須）。通知メールに記載される。
 STORAGE_URL=

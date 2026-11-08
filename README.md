@@ -83,6 +83,7 @@ sudo apt install ./target/debian/nhk-radio-retriever_*.deb
    | 変数 | 必須 | 内容 |
    |---|---|---|
    | `MTA_ADDRESS` | 必須 | 結果通知メールを送るSMTPサーバーのアドレス（例: `smtp.example.com`） |
+   | `MAIL_RECIPIENT` | 必須 | 結果通知メールの宛先（例: `user@example.com`） |
    | `STORAGE_URL` | 必須 | 通知メールに記載するクラウドストレージのURL |
    | `REMOTE_DIR` | 任意 | アップロード先のディレクトリ。省略時は`nhk_radio/` |
 
@@ -142,8 +143,8 @@ journalctl -t push-to-cloud                        # スクリプトのログ
 3. 作成から30日以上経過した`.m4a`ファイルを、アップロードの成否にかかわらず削除します。
 
 エラーや再試行の記録は、`journalctl -t push-to-cloud`で確認できます。
-メール送信には`mailx`コマンドを使います。`--exec`オプションを使っているため、
-お使いの`mailx`の実装が対応していない場合は、スクリプトを調整してください。
+メール送信には`swaks`を使い、`MTA_ADDRESS`で指定したSMTPサーバーの25番ポートに直接接続します。
+debパッケージを使う場合、`swaks`は依存パッケージとしてインストールされます。
 
 
 # 利用方法
