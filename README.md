@@ -118,9 +118,17 @@ sudo apt install ./target/debian/nhk-radio-retriever_*.deb
    `list`で作られた`available_program.json`から不要な行を削除し、
    `/var/lib/nhk-radio-retriever/.config/nhk-radio-retriever/program_to_save.json`として保存します。
 
-動作は次のコマンドで確認できます。
+以上の設定により、毎日午前3時に`push-to-cloud.sh`スクリプトが実行され、ストリームを保存さ、クラウドにアップロードされます。
+
+午前3時を待たずに即座にスクリプトを実行したい場合は、次のコマンドを使用します。
 ```sh
-sudo systemctl start nhk-radio-retriever.service   # 手動で実行
+sudo systemctl start --no-block nhk-radio-retriever.service  # 手動でpush-to-cloud.shを実行
+```
+
+上のコマンドでスクリプトを手動実行した後、次のコマンドでタイマーの状態や結果のログを確認できます。
+なお、スクリプトがリトライした場合、結果が出るまで最大30分程度かかることがあります。
+
+```
 systemctl list-timers nhk-radio-retriever.timer    # 次回の実行予定
 journalctl -t push-to-cloud                        # スクリプトのログ
 ```
