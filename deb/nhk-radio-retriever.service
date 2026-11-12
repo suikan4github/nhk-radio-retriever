@@ -1,0 +1,13 @@
+[Unit]
+Description=Retrieve NHK radio programs and upload them to cloud storage
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=nhk-radio
+Group=nhk-radio
+EnvironmentFile=/etc/default/nhk-radio-retriever
+ExecStart=/usr/bin/nhk-radio-push-to-cloud
+# スクリプト内で最大15分間隔の再試行を行うため、十分長く設定する。
+TimeoutStartSec=4h

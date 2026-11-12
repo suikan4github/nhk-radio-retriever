@@ -1,0 +1,16 @@
+# nhk-radio-retriever の設定ファイル。nhk-radio-retriever.service が読み込む。
+
+# SMTPサーバーのホスト名またはIPアドレス（25番ポート、必須）
+#MTA_ADDRESS=192.168.0.1 # 例
+MTA_ADDRESS=
+
+# 通知メールの宛先（必須）
+#MAIL_RECIPIENT=foo@example.com
+MAIL_RECIPIENT=
+
+# アップロード先クラウドストレージのURL（必須）。通知メールに記載される。
+STORAGE_URL=
+
+# `rclone config` で作成するリモート名は "nhk_radio" とすること。
+# リモート上の保存先ディレクトリ（省略時: nhk_radio/）
+#REMOTE_DIR=nhk_radio/

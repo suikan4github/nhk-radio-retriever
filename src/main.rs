@@ -17,18 +17,18 @@ use std::io::Write;
 enum Command {
     /// 番組の一覧を表示する
     List {
-        /// 番組の一覧をJSON形式で保存するファイルのパス
-        #[arg(short, long, default_value = "available_program.json")]
-        output_file: String,
+        /// 番組の一覧をJSON形式で保存するファイルのパス。デフォルトは $HOME/.config/nhk-radio-retriever/available_program.json
+        #[arg(short, long)]
+        output_file: Option<String>,
     },
     /// 番組のストリームを保存する
     Retrieve {
-        /// 保存したい番組のIDを格納したJSONファイルのパス
-        #[arg(short, long, default_value = "program_to_save.json")]
-        program_to_save: String,
-        /// 保存先のディレクトリ
-        #[arg(short, long, default_value = concat!(env!("HOME"), "/recordings"))]
-        output_dir: String,
+        /// 保存したい番組のIDを格納したJSONファイルのパス。デフォルトは $HOME/.config/nhk-radio-retriever/program_to_save.json
+        #[arg(short, long)]
+        program_to_save: Option<String>,
+        /// 保存先のディレクトリ。デフォルトは $HOME/.local/share/nhk-radio-retriever/recordings
+        #[arg(short, long)]
+        output_dir: Option<String>,
     },
     /// コマンドライン補完のためのスクリプトを生成する
     GenerateCompletions {
@@ -46,31 +46,40 @@ struct Cli {
     command: Command,
 }
 
+fn home_path(relative_path: &str) -> String {
+    let home = std::env::var("HOME").expect("HOME environment variable is not set");
+    format!("{home}/{relative_path}")
+}
+
 fn main() {
-    // コマンドライン引数を解析する
     let cli = Cli::parse();
 
-    // サブコマンドに応じて処理を分岐する
     match cli.command {
         Command::List { output_file } => {
-            // 番組の一覧を表示する処理
+            let output_file = output_file.unwrap_or_else(|| {
+                home_path(".config/nhk-radio-retriever/available_program.json")
+            });
             list_programs(&output_file);
         }
         Command::Retrieve {
             program_to_save,
             output_dir,
         } => {
-            // 番組のストリームを保存する処理
+            let program_to_save = program_to_save.unwrap_or_else(|| {
+                home_path(".config/nhk-radio-retriever/program_to_save.json")
+            });
+            let output_dir = output_dir.unwrap_or_else(|| {
+                home_path(".local/share/nhk-radio-retriever/recordings")
+            });
             retrieve_programs(&program_to_save, &output_dir);
         }
         Command::GenerateCompletions { shell } => {
-            // コマンドライン補完のためのスクリプトを生成する処理
-            let mut cmd = Cli::command(); // 次の行で使う
+            let mut cmd = Cli::command();
             clap_complete::generate(
-                shell,                  // 使用するシェルの種類
-                &mut cmd,               // コマンドの定義
-                env!("CARGO_PKG_NAME"), // Cargo.tomlに書いたパッケージ名
-                &mut std::io::stdout(), // 出力先
+                shell,
+                &mut cmd,
+                env!("CARGO_PKG_NAME"),
+                &mut std::io::stdout(),
             );
         }
     }
@@ -133,6 +142,16 @@ fn list_programs(output_file: &str) {
     // 新着聴き逃し情報をデシリアライズする
     let new_info: NewInfo = serde_json::from_str(&body).expect("JSON was not well-formatted");
 
+    // 親ディレクトリが存在しない場合は作成する
+    if let Some(parent) = std::path::Path::new(output_file).parent() {
+        if !parent.as_os_str().is_empty() {
+            std::fs::create_dir_all(parent).expect(&format!(
+                "ディレクトリ {} を作成できませんでした。パスを確認してください。",
+                parent.display()
+            ));
+        }
+    }
+
     // 書き込み先ファイルを開く
     let mut file = std::fs::File::create(output_file).expect(&format!(
         "ファイル {} を作成できませんでした。ディレクトリを確認してください。",
@@ -189,10 +208,23 @@ fn retrieve_programs(program_to_save: &str, output_dir: &str) {
             program.series_site_id, program.corner_site_id
         );
         // series_urlを使用してAPIから番組データを取得する。
-        let response = reqwest::blocking::get(&series_url).expect(&format!(
-            "番組URL {} へのアクセスを確立できるようにしてください。",
-            series_url
-        ));
+        let client = reqwest::blocking::Client::new();
+        let response = client
+            .get(&series_url)
+            .header(reqwest::header::USER_AGENT, "nhk-radio-retriever/1.0")
+            .header(reqwest::header::ACCEPT, "application/json")
+            .send()
+            .expect(&format!(
+                "番組URL {} へのアクセスを確立できるようにしてください。",
+                series_url
+            ));
+        let status = response.status();
+        let content_type = response
+            .headers()
+            .get(reqwest::header::CONTENT_TYPE)
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("(unknown)")
+            .to_string();
         // JSONレスポンスをテキストとして取得する
         // ここで失敗することは、まぁ無い。
         let body = response.text().expect(
@@ -202,6 +234,21 @@ fn retrieve_programs(program_to_save: &str, output_dir: &str) {
             )
             .as_str(),
         );
+        if !status.is_success() {
+            let preview = body.chars().take(200).collect::<String>();
+            eprintln!(
+                "警告: HTTPステータスが成功ではありません。スキップします。\nURL: {}\nStatus: {}\nContent-Type: {}\nBody(先頭200文字): {}",
+                series_url, status, content_type, preview
+            );
+            continue;
+        }
+        if body.trim().is_empty() {
+            eprintln!(
+                "警告: レスポンスが空でした。スキップします。\nURL: {}\nStatus: {}\nContent-Type: {}",
+                series_url, status, content_type
+            );
+            continue;
+        }
         
         // シリーズ情報をデシリアライズする
         let series: Series = match serde_json::from_str(&body) {
